@@ -36,11 +36,6 @@ public class ClientService {
     @Cached(cacheName = "clients", key = "#id")
     @Metric
     public Client getClient(Long id){
-        try{
-            Thread.sleep(1000);
-        }catch (InterruptedException ex){
-            logger.error(ex.getMessage());
-        }
         logger.info("Fetching client with ID: {}", id);
         return clientRepository.findById(id)
                 .orElseThrow(() -> {

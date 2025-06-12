@@ -3,7 +3,6 @@ package com.example.T1.kafka;
 import com.example.T1.dto.TransactionMessage;
 import com.example.T1.exceptions.InsufficientFundsException;
 import com.example.T1.services.TransactionService;
-import jakarta.transaction.Transactional;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -11,7 +10,7 @@ import org.springframework.stereotype.Component;
 import org.slf4j.Logger;
 
 @Component
-@Transactional
+
 public class TransactionConsumer {
     private final Logger logger = LoggerFactory.getLogger(TransactionConsumer.class);
     private final TransactionService transactionService;
@@ -28,8 +27,8 @@ public class TransactionConsumer {
 
         try{
             transactionService.processTransaction(transactionMessage);
-        } catch(InsufficientFundsException e){
-            logger.error(e.getMessage());
+        } catch (Exception e) {
+            logger.error("Неизвестная ошибка: {}", e.getMessage(), e);
         }
 
     }

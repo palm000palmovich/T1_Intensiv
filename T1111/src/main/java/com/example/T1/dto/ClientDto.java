@@ -10,6 +10,12 @@ public class ClientDto {
     private String last;
     private String middle;
 
+    public ClientDto(String first, String last, String middle) {
+        this.first = first;
+        this.last = last;
+        this.middle = middle;
+    }
+
     public ClientDto(){}
 
     public String getFirst() {

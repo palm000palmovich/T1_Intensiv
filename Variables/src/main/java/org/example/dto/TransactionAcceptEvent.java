@@ -1,4 +1,4 @@
-package com.example.T1.dto;
+package org.example.dto;
 
 import java.time.LocalDateTime;
 
@@ -12,9 +12,7 @@ public class TransactionAcceptEvent {
 
     public TransactionAcceptEvent(){}
 
-    public TransactionAcceptEvent(Long clientId, Long accountId,
-                                  Long transactionId, LocalDateTime timestamp,
-                                  Long amount, Long balance) {
+    public TransactionAcceptEvent(Long clientId, Long accountId, Long transactionId, LocalDateTime timestamp, Long amount, Long balance) {
         this.clientId = clientId;
         this.accountId = accountId;
         this.transactionId = transactionId;
@@ -69,5 +67,17 @@ public class TransactionAcceptEvent {
 
     public void setBalance(Long balance) {
         this.balance = balance;
+    }
+
+    @Override
+    public String toString() {
+        return "TransactionAcceptEvent{" +
+                "clientId=" + clientId +
+                ", accountId=" + accountId +
+                ", transactionId=" + transactionId +
+                ", timestamp=" + timestamp +
+                ", amount=" + amount +
+                ", balance=" + balance +
+                '}';
     }
 }

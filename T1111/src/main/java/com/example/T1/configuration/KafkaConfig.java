@@ -2,12 +2,13 @@ package com.example.T1.configuration;
 
 import com.example.T1.dto.DataErrorDto;
 import com.example.T1.dto.TimeLimitExceedDto;
-import com.example.T1.dto.TransactionAcceptEvent;
+
 import com.example.T1.dto.TransactionMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.apache.kafka.common.serialization.StringSerializer;
+import org.example.dto.TransactionAcceptEvent;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,7 +28,7 @@ public class KafkaConfig {
     @Value("${spring.kafka.bootstrap-servers}")
     private String bootstrapServers;
 
-    @Bean
+    /*@Bean
     public ProducerFactory<String, Object> producerFactory() {
         Map<String, Object> configProps = new HashMap<>();
         configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
@@ -39,8 +40,9 @@ public class KafkaConfig {
     @Bean
     public KafkaTemplate<String, Object> kafkaTemplate() {
         return new KafkaTemplate<>(producerFactory());
-    }
+    }*/
 
+    //Consumer для TransactionMessage
     @Bean
     public ConsumerFactory<String, TransactionMessage> transactionMessageConsumerFactory() {
         Map<String, Object> props = new HashMap<>();
@@ -70,11 +72,10 @@ public class KafkaConfig {
     }
 
 
-    //Персонально для TransactionMessage
+    //Producer для TransactionMessage
     @Bean
-    public KafkaTemplate<String, TransactionMessage> transactionMessageKafkaTemplate(
-            ProducerFactory<String, TransactionMessage> producerFactory) {
-        return new KafkaTemplate<>(producerFactory);
+    public KafkaTemplate<String, TransactionMessage> transactionMessageKafkaTemplate() {
+        return new KafkaTemplate<>(transactionMessageProducerFactory());
     }
 
     @Bean
@@ -86,7 +87,7 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-    //Персонально для TransactionAcceptEvent
+    //Producer для TransactionAcceptEvent
     @Bean
     public ProducerFactory<String, TransactionAcceptEvent> acceptEventProducerFactory() {
         Map<String, Object> config = new HashMap<>();
@@ -101,7 +102,7 @@ public class KafkaConfig {
         return new KafkaTemplate<>(acceptEventProducerFactory());
     }
 
-    //Персонально для сообщений об Error
+    //Producer для сообщений об Error
     @Bean
     public KafkaTemplate<String, DataErrorDto> errorDtoKafkaTemplate() {
         return new KafkaTemplate<>(errorDtoProducerFactory());
@@ -116,7 +117,7 @@ public class KafkaConfig {
         return new DefaultKafkaProducerFactory<>(configProps);
     }
 
-    //Персонально для сообщений о медленных методах
+    //Producer для сообщений о медленных методах
     @Bean
     public KafkaTemplate<String, TimeLimitExceedDto> timeLimitExceedDtoKafkaTemplate() {
         return new KafkaTemplate<>(methodMetricProducerFactory());
