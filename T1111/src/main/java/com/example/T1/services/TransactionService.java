@@ -57,7 +57,7 @@ public class TransactionService {
             transaction.setAccount(account);
 
             long newBalance = account.getBalance() - transactionMessage.getValue();
-            account.setBalance(newBalance); //TODO нахуя сейчас менять баланс??? сделать, чтоб он менялся только после одобрения.
+            account.setBalance(newBalance);
             account.addTransaction(transaction);
 
             //Сохр-е инфы по счету в бд

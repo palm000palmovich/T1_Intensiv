@@ -37,7 +37,7 @@ public class DataGenerator {
 
     @PostConstruct
     public void generateData(){
-        int extremum = 100;
+        int extremum = 200;
 
         if (clientRepository.count() < extremum){
             logger.info("БД пуста. Происходит заполнение.");
@@ -54,7 +54,7 @@ public class DataGenerator {
                 account.setBalance(faker.number().randomNumber(6, true));
                 account.setAccountId(i+1L);
                 account.setStatus(listOfAccStatus.get(random.nextInt(4)));
-                account.setFrozenAmount(random.nextLong(account.getBalance()));
+                account.setFrozenAmount(0L);
                 client.addAccount(account);
 
 
