@@ -6,9 +6,11 @@ import com.example.T1.dto.TransactionMessage;
 import com.example.T1.enums.TransactionStatus;
 import com.example.T1.exceptions.AccountNotFoundException;
 import com.example.T1.model.Account;
+import com.example.T1.model.Client;
 import com.example.T1.model.Transaction;
 import com.example.T1.repository.AccountRepository;
 import jakarta.transaction.Transactional;
+import org.example.dto.BlackListCheckResponse;
 import org.example.dto.TransactionAcceptEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,16 +25,19 @@ public class TransactionService {
     private final KafkaTemplate<String, TransactionAcceptEvent> kafkaTemplate;
     private final AccountRepository accountRepository;
     private final RedisCacheUtils cacheUtils;
-    private final Logger logger = LoggerFactory.getLogger(TransactionService.class);
+    private final Service2Client service2Client;
     @Value("${spring.cache.redis.time-to-lived}")
     private Long limitTime;
+    private final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     public TransactionService(KafkaTemplate<String, TransactionAcceptEvent> kafkaTemplate,
                                AccountRepository accountRepository,
-                               RedisCacheUtils cacheUtils){
+                               RedisCacheUtils cacheUtils,
+                              Service2Client service2Client){
         this.kafkaTemplate = kafkaTemplate;
         this.accountRepository = accountRepository;
         this.cacheUtils = cacheUtils;
+        this.service2Client = service2Client;
     }
 
     @Transactional
@@ -42,11 +47,18 @@ public class TransactionService {
         Account account = accountRepository.getAccountByThroughId(transactionMessage.getAccId())
                 .orElseThrow(() -> new AccountNotFoundException(transactionMessage.getAccId()));
 
-        logger.info("Акк для сохранения: " + account.getId() + " " + account.getBalance() + " " + account.getClient().getId() + " " +
+        logger.info("Найденный акк: " + account.getId() + " " + account.getBalance() + " " + account.getClient().getId() + " " +
                 account.getType() + " " + account.getAccountId() + " " + account.getStatus() + " " + account.getFrozenAmount());
 
         //Проверка статуса счета
         if (account.getStatus().toString().equals("OPEN")) {
+            Client client = account.getClient();
+            if (client.getStatus().toString() == null){
+                logger.info("Неизвестный статус клиента, его данные были отправлены на проверку...");
+                BlackListCheckResponse statusDto = service2Client
+                        .checkClientStatus(client.getClientId(), account.getAccountId());
+            }
+
             Transaction transaction = new Transaction();
             transaction.setValue(transactionMessage.getValue());
             transaction.setTimestamp(LocalDateTime.now());

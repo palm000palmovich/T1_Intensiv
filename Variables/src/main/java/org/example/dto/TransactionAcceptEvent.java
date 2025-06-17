@@ -12,7 +12,9 @@ public class TransactionAcceptEvent {
 
     public TransactionAcceptEvent(){}
 
-    public TransactionAcceptEvent(Long clientId, Long accountId, Long transactionId, LocalDateTime timestamp, Long amount, Long balance) {
+    public TransactionAcceptEvent(Long clientId, Long accountId,
+                                  Long transactionId, LocalDateTime timestamp,
+                                  Long amount, Long balance) {
         this.clientId = clientId;
         this.accountId = accountId;
         this.transactionId = transactionId;

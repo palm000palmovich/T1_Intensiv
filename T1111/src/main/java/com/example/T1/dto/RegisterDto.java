@@ -7,7 +7,9 @@ public class RegisterDto {
     private String lastName;
     private String middleName;
 
-    public RegisterDto(String username, String password, String firstName, String lastName, String middleName) {
+    public RegisterDto(String username, String password,
+                       String firstName, String lastName,
+                       String middleName) {
         this.username = username;
         this.password = password;
         this.firstName = firstName;
@@ -61,7 +63,6 @@ public class RegisterDto {
     public String toString() {
         return "RegisterDto{" +
                 "username='" + username + '\'' +
-                ", password='" + password + '\'' +
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", middleName='" + middleName + '\'' +

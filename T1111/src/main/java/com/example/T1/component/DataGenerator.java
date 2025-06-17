@@ -35,7 +35,7 @@ public class DataGenerator {
         this.clientRepository = clientRepository;
     }
 
-    @PostConstruct
+    //@PostConstruct
     public void generateData(){
         int extremum = 200;
 

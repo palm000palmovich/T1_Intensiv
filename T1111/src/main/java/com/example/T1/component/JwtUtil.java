@@ -1,13 +1,10 @@
 package com.example.T1.component;
 
-import com.example.T1.enums.UserRoles;
 import com.example.T1.model.User;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
-import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.function.Function;
 
@@ -54,12 +51,22 @@ public class JwtUtil {
         return (extractedUsername.equals(username) && !isTokenExpired(token));
     }
 
-    public String generateTokenForService() {
+    public String generateServiceToken() {
         return Jwts.builder()
-                .setSubject("service1")
-                .claim("role", UserRoles.USER.name())
-                .setExpiration(new Date(System.currentTimeMillis() + 86400000)) // 1 день
+                .setSubject("service-account")
+                .claim("scope", "service")
+                .setExpiration(new Date(System.currentTimeMillis() + 3600000)) // 1 час
                 .signWith(SignatureAlgorithm.HS512, SECRET_KEY)
                 .compact();
+    }
+
+    public Boolean validateServiceToken(String token) {
+        try {
+            Jws<Claims> claimsJws = Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
+            String subject = claimsJws.getBody().getSubject();
+            return "service-account".equals(subject);
+        } catch (JwtException e) {
+            return false;
+        }
     }
 }

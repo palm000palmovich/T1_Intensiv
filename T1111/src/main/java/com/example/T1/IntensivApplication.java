@@ -11,6 +11,12 @@ import org.springframework.cache.annotation.EnableCaching;
 public class IntensivApplication{
 	public static void main(String[] args) {
 		SpringApplication.run(IntensivApplication.class, args);
+
+		//TODO анжуманья
+		//TODO прес качат
+		//TODO бегит
+		//TODO праседанье
+		//TODO пафтор
 	}
 
 }

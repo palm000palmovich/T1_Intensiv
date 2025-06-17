@@ -14,4 +14,7 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
 
     @Query(value = "select * from account a where a.accountId = :accId", nativeQuery = true)
     Optional<Account> getAccountByThroughId(@Param("accId") Long accId);
+
+    @Query(value = "select * from account order by id desc limit 1", nativeQuery = true)
+    Optional<Account> getLastAccount();
 }

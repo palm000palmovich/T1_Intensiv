@@ -3,12 +3,12 @@ package com.example.T1.controllers;
 import com.example.T1.component.JwtUtil;
 import com.example.T1.dto.LoginDto;
 import com.example.T1.dto.RegisterDto;
+import com.example.T1.exceptions.UserAlreadyRegisteredException;
 import com.example.T1.model.User;
 import com.example.T1.services.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -30,7 +30,6 @@ public class AuthController {
         this.jwtUtil = jwtUtil;
     }
 
-    //TODO вместо искл-й сделать статус-коды с телом
     @PostMapping("/login")
     public ResponseEntity<?> createAuthenticationToken(@RequestBody LoginDto login) throws Exception {
         try {
@@ -38,19 +37,25 @@ public class AuthController {
                     new UsernamePasswordAuthenticationToken(login.getUsername(), login.getPassword())
             );
         } catch (Exception e) {
-            throw new Exception("Incorrect username or password", e);
+            logger.error("Ошибка при входе: {}", e.getMessage());
+            return ResponseEntity.badRequest().body("Incorrect username or password");
         }
 
-        final UserDetails userDetails = userService.loadUserByUsername(login.getUsername());
-        final String jwt = jwtUtil.generateToken((User) userDetails);
+        final User user = userService.loadUserByUsername(login.getUsername());
+        final String jwt = jwtUtil.generateToken(user);
 
         logger.info("Полученный jwt: {}", jwt);
         return ResponseEntity.ok().body("Success log-in.");
     }
 
 
-    @PostMapping("/register")//TODO сделать проверку на существующий акк
-    public ResponseEntity<?> registerUser(@RequestBody RegisterDto request) {
-        return ResponseEntity.ok(userService.registerNewUser(request));
+    @PostMapping("/register")
+    public ResponseEntity<?> registerUser(@RequestBody RegisterDto registerDto) {
+        try {
+            return ResponseEntity.ok(userService.registerNewUser(registerDto));
+        } catch (UserAlreadyRegisteredException exception){
+            logger.error(exception.getMessage());
+            return ResponseEntity.badRequest().body(exception.getMessage());
+        }
     }
 }

@@ -23,7 +23,6 @@ public class RedisCacheUtils {
         redisTemplate.opsForValue().set(key, value, timeoutInSeconds, TimeUnit.SECONDS);
     }
 
-
     public <T> T getValue(String key, Class<T> type) {
         Object value = redisTemplate.opsForValue().get(key);
         if (value instanceof LinkedHashMap) {

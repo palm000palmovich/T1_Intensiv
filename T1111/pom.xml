@@ -113,7 +113,7 @@
 			<artifactId>jackson-databind</artifactId>
 		</dependency>
 
-<!--		Для сериализации дата-время-->
+		<!--		Для сериализации дата-время-->
 		<dependency>
 			<groupId>com.fasterxml.jackson.datatype</groupId>
 			<artifactId>jackson-datatype-jsr310</artifactId>
@@ -127,14 +127,14 @@
 			<version>2.2.0</version>
 		</dependency>
 
-<!--		Общие классы-->
+		<!--		Общие классы-->
 		<dependency>
 			<groupId>org.example</groupId>
 			<artifactId>common</artifactId>
 			<version>1.0.0</version>
 		</dependency>
 
-<!--		Безопасность-->
+		<!--		Безопасность-->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-security</artifactId>
@@ -158,7 +158,6 @@
 			<version>0.11.5</version>
 			<scope>runtime</scope>
 		</dependency>
-
 	</dependencies>
 
 	<build>

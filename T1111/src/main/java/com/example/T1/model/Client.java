@@ -1,5 +1,6 @@
 package com.example.T1.model;
 
+import com.example.T1.enums.ClientStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 
@@ -22,18 +23,22 @@ public class Client implements Serializable {
     private String middleName;
     @Column(name = "clientid", nullable = false)
     private Long clientId;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "status")
+    private ClientStatus status;
 
     @OneToMany(mappedBy = "client", cascade = CascadeType.ALL,
             orphanRemoval = true, fetch = FetchType.EAGER)
     @JsonManagedReference
     private List<Account> accounts = new ArrayList<>();
 
-    public Client(String firstName, String lastName, String middleName, List<Account> accounts, Long clientId) {
+    public Client(Long id, String firstName, String lastName, String middleName, Long clientId, ClientStatus status) {
+        this.id = id;
         this.firstName = firstName;
         this.lastName = lastName;
         this.middleName = middleName;
-        this.accounts = accounts;
         this.clientId = clientId;
+        this.status = status;
     }
 
     public Client(){}
@@ -96,6 +101,14 @@ public class Client implements Serializable {
         this.accounts = accounts;
     }
 
+    public ClientStatus getStatus() {
+        return status;
+    }
+
+    public void setStatus(ClientStatus status) {
+        this.status = status;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -103,6 +116,7 @@ public class Client implements Serializable {
         Client client = (Client) o;
         return Objects.equals(id, client.id);
     }
+
 
     @Override
     public int hashCode() {
@@ -116,6 +130,8 @@ public class Client implements Serializable {
                 ", firstName='" + firstName + '\'' +
                 ", lastName='" + lastName + '\'' +
                 ", middleName='" + middleName + '\'' +
+                ", clientId=" + clientId +
+                ", status=" + status +
                 ", accounts=" + accounts +
                 '}';
     }

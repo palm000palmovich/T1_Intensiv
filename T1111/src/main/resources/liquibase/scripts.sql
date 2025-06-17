@@ -27,3 +27,7 @@ CREATE TABLE users (
     client_id BIGINT,
     FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE SET NULL
 );
+
+--changeset IvanTyapkin:8
+ALTER TABLE clients
+ADD COLUMN status VARCHAR(255);
