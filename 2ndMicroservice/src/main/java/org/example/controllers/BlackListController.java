@@ -1,6 +1,5 @@
 package org.example.controllers;
 
-import org.example.component.JwtUtil;
 import org.example.dto.BlackListCheck;
 import org.example.dto.BlackListCheckResponse;
 import org.example.services.BlackListService;
@@ -13,13 +12,10 @@ import org.slf4j.LoggerFactory;
 @RequestMapping(path = "/api/client")
 public class BlackListController {
     private final BlackListService blackListService;
-    private final JwtUtil jwtUtil;
     private final Logger logger = LoggerFactory.getLogger(BlackListController.class);
 
-    public BlackListController(BlackListService blackListService,
-                               JwtUtil jwtUtil){
+    public BlackListController(BlackListService blackListService){
         this.blackListService = blackListService;
-        this.jwtUtil = jwtUtil;
     }
 
     @PostMapping("/status")
@@ -27,14 +23,13 @@ public class BlackListController {
             @RequestBody(required = true) BlackListCheck dto,
             @RequestHeader("Authorization") String token) {
 
-        logger.info("Полученное дто: {}", dto.toString());
-        //TODO это перенести в сервис
-        String pureToken = token.replace("Bearer ", "");
-        if (!jwtUtil.validateServiceToken(pureToken)) {
-            logger.error("Проблема с межсервисной авторизацией");
-            throw new RuntimeException("Unauthorized");
+        try{
+            BlackListCheckResponse blackListCheckResponse = blackListService.isBlack(dto, token);
+            logger.info("Ответ сервису: {}", blackListService.isBlack(dto, token));
+            return ResponseEntity.ok(blackListCheckResponse);
+        } catch (RuntimeException exep){
+            logger.info("Ошибка: {}", exep.getMessage());
+            return ResponseEntity.internalServerError().build();
         }
-
-        return ResponseEntity.ok(blackListService.isBlack(dto));
     }
 }

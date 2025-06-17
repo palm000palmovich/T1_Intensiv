@@ -50,13 +50,15 @@ public class TransactionService {
         logger.info("Найденный акк: " + account.getId() + " " + account.getBalance() + " " + account.getClient().getId() + " " +
                 account.getType() + " " + account.getAccountId() + " " + account.getStatus() + " " + account.getFrozenAmount());
 
+        //TODO сделал проверу статуса в бд во втором сервисе, осталось все остальное
         //Проверка статуса счета
         if (account.getStatus().toString().equals("OPEN")) {
             Client client = account.getClient();
-            if (client.getStatus().toString() == null){
+            if (client.getStatus() == null){
                 logger.info("Неизвестный статус клиента, его данные были отправлены на проверку...");
                 BlackListCheckResponse statusDto = service2Client
                         .checkClientStatus(client.getClientId(), account.getAccountId());
+                logger.info("Полученный ответ: {}", statusDto.toString());
             }
 
             Transaction transaction = new Transaction();
