@@ -1,16 +1,17 @@
 package com.example.T1.services;
 
 import com.example.T1.component.RedisCacheUtils;
-import com.example.T1.dto.AccountDto;
-import com.example.T1.dto.TransactionAcceptEvent;
+
 import com.example.T1.dto.TransactionMessage;
 import com.example.T1.enums.TransactionStatus;
 import com.example.T1.exceptions.AccountNotFoundException;
-import com.example.T1.exceptions.InsufficientFundsException;
 import com.example.T1.model.Account;
+import com.example.T1.model.Client;
 import com.example.T1.model.Transaction;
 import com.example.T1.repository.AccountRepository;
 import jakarta.transaction.Transactional;
+import org.example.dto.BlackListCheckResponse;
+import org.example.dto.TransactionAcceptEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -24,59 +25,60 @@ public class TransactionService {
     private final KafkaTemplate<String, TransactionAcceptEvent> kafkaTemplate;
     private final AccountRepository accountRepository;
     private final RedisCacheUtils cacheUtils;
-    private final Logger logger = LoggerFactory.getLogger(TransactionService.class);
+    private final Service2Client service2Client;
     @Value("${spring.cache.redis.time-to-lived}")
     private Long limitTime;
+    private final Logger logger = LoggerFactory.getLogger(TransactionService.class);
 
     public TransactionService(KafkaTemplate<String, TransactionAcceptEvent> kafkaTemplate,
                                AccountRepository accountRepository,
-                               RedisCacheUtils cacheUtils){
+                               RedisCacheUtils cacheUtils,
+                              Service2Client service2Client){
         this.kafkaTemplate = kafkaTemplate;
         this.accountRepository = accountRepository;
         this.cacheUtils = cacheUtils;
+        this.service2Client = service2Client;
     }
 
     @Transactional
-    public void processTransaction(TransactionMessage transactionMessage){
-        try {
-            Account account = findAcc(transactionMessage);
+    public void processTransaction(TransactionMessage transactionMessage) {
+        logger.info("Начало обработки транзакции: {}", transactionMessage);
 
-            //Проверка статуса счета
-            if (account.getStatus().toString().equals("OPEN")){
-                Transaction transaction = new Transaction();
-                transaction.setValue(transactionMessage.getValue());
-                transaction.setTimestamp(LocalDateTime.now());
-                transaction.setTransactionId(transactionMessage.getTransactionId());
-                transaction.setStatus(TransactionStatus.REQUESTED);
-                transaction.setAccount(account);
+        Account account = accountRepository.getAccountByThroughId(transactionMessage.getAccId())
+                .orElseThrow(() -> new AccountNotFoundException(transactionMessage.getAccId()));
 
-                if (account.getBalance() < transactionMessage.getValue()){
-                    throw new InsufficientFundsException(account.getId(), account.getBalance(),
-                            transactionMessage.getValue());
-                }
-                long newBalance = account.getBalance() - transactionMessage.getValue();
-                account.setBalance(newBalance);
-                account.addTransaction(transaction);
+        logger.info("Найденный акк: " + account.getId() + " " + account.getBalance() + " " + account.getClient().getId() + " " +
+                account.getType() + " " + account.getAccountId() + " " + account.getStatus() + " " + account.getFrozenAmount());
 
-                //Сохр-е инфы по счету в бд
-                accountRepository.save(account);
-
-                cacheUtils.putValue(
-                        "accounts::" + account.getAccountId(),
-                        account,
-                        limitTime
-                );
-
-                //отправка в топик в топик t1_demo_transaction_accept
-                sendAcceptEvent(account, transaction, newBalance);
-
+        //Проверка статуса счета
+        if (account.getStatus().toString().equals("OPEN")) {
+            Client client = account.getClient();
+            if (client.getStatus().toString() == null){
+                logger.info("Неизвестный статус клиента, его данные были отправлены на проверку...");
+                BlackListCheckResponse statusDto = service2Client
+                        .checkClientStatus(client.getClientId(), account.getAccountId());
             }
 
-        } catch(AccountNotFoundException exep){
-            logger.error("Вылетело исключение: {}", exep.getMessage());
-            throw exep;
-        }
+            Transaction transaction = new Transaction();
+            transaction.setValue(transactionMessage.getValue());
+            transaction.setTimestamp(LocalDateTime.now());
+            transaction.setTransactionId(transactionMessage.getTransactionId());
+            transaction.setStatus(TransactionStatus.REQUESTED);
+            transaction.setAccount(account);
 
+            long newBalance = account.getBalance() - transactionMessage.getValue();
+            account.setBalance(newBalance);
+            account.addTransaction(transaction);
+
+            //Сохр-е инфы по счету в бд
+            accountRepository.save(account);
+            logger.info("Транзакция сохранена, баланс обновлен");
+
+
+            //отправка в топик в топик t1_demo_transaction_accept
+            sendAcceptEvent(account, transaction, newBalance);
+
+        }
     }
 
 
@@ -89,13 +91,14 @@ public class TransactionService {
                 transaction.getValue(),
                 newBalance
         );
-
+        logger.info("Попытка отправки сущности {} в топик...", event.toString());
         try {
             kafkaTemplate.send(
                     "t1_demo_transaction_accept",
                     account.getAccountId().toString(),
                     event
             );
+
             logger.info("Информация об изменении счета отправлена в топик t1_demo_transaction_accept");
         } catch (Exception e) {
             logger.error("Проблема отправки сообщения в топик t1_demo_transaction_accept: {}",
@@ -104,31 +107,62 @@ public class TransactionService {
     }
 
 
-    private Account findAcc(TransactionMessage transactionMessage){
+    /*private Account findAcc(TransactionMessage transactionMessage){
         Long accountId = transactionMessage.getAccId();
-        //Проверка кеша
         Account foundAccount = new Account();
-        String fullKey = "accounts::" + accountId;
+
+        //Проверка кеша
+        String fullKey = "accountDto::" + accountId;
+
         if (cacheUtils.hasKey(fullKey)){
-            logger.info("Счет транзакции {} есть в кеше", transactionMessage.toString());
-            foundAccount = cacheUtils.getValue(fullKey, Account.class);
+            AccountDto accountDto = cacheUtils.getValue(fullKey, AccountDto.class);
+            logger.info("Счет транзакции {} есть в кеше", accountDto.toString());
+            foundAccount.setId(accountDto.getPrimaryKey());
+            foundAccount.setType(accountDto.getAccountType());
+            foundAccount.setBalance(accountDto.getBalance());
+            foundAccount.setAccountId(accountDto.getAccountId());
+            foundAccount.setStatus(accountDto.getStatus());
+            foundAccount.setFrozenAmount(accountDto.getFrozenAmount());
+
+            Client client = new Client();
+            client.setId(accountDto.getClientId());
+            foundAccount.setClient(client);
+
+
+            return foundAccount;
+
         } else{
-            foundAccount = accountRepository.findById(accountId).orElseThrow(() ->
-                    new AccountNotFoundException(accountId));
+            foundAccount = accountRepository.getAccountByThroughId(accountId)
+                    .orElseThrow(() -> new AccountNotFoundException(accountId));
+
+
+            if (foundAccount.getClient() == null){
+                logger.error("У аккаунта не найден клиент.");
+            }
+
+            AccountDto accountDto = new AccountDto(
+                    foundAccount.getId(),
+                    foundAccount.getType(),
+                    foundAccount.getBalance(),
+                    foundAccount.getAccountId(),
+                    foundAccount.getStatus(),
+                    foundAccount.getFrozenAmount(),
+                    foundAccount.getClient().getId()
+            );
+
+            logger.info("Найденный аккаунт: {}", accountDto.toString());
 
             //Попытка кеширования
             try {
-                cacheUtils.putValue(fullKey, foundAccount, limitTime);
+                cacheUtils.putValue(fullKey, accountDto, limitTime);
                 logger.info("Сущность была кеширована");
             } catch(RuntimeException exception){
                 logger.error("Проблемы с кешированием: {}", exception.getMessage());
             }
 
-            AccountDto accountDto = new AccountDto(foundAccount.getType(), foundAccount.getBalance(),
-                    foundAccount.getAccountId(), foundAccount.getStatus(), foundAccount.getFrozenAmount());
-            logger.info("Найденный аккаунт: " + accountDto.toString());
         }
 
         return foundAccount;
-    }
+    }*/
+    //TODO сделать прогон через кеш редиса, сейчас работает говняно
 }

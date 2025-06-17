@@ -16,4 +16,16 @@ public class ClientMapper {
 
         return client;
     }
+
+    public ClientDto entityToDto(Client client){
+        ClientDto clientDto = new ClientDto();
+
+        clientDto.setFirst(client.getFirstName());
+        clientDto.setLast(client.getLastName());
+        clientDto.setMiddle(client.getMiddleName());
+        clientDto.setClientId(client.getClientId());
+        clientDto.setStatus(client.getStatus());
+
+        return clientDto;
+    }
 }

@@ -1,6 +1,7 @@
 package com.example.T1.controllers;
 
 import com.example.T1.dto.AccountDto;
+import com.example.T1.dto.CreateAccount;
 import com.example.T1.exceptions.UserNotFoundException;
 import com.example.T1.model.Account;
 import com.example.T1.services.AccountService;
@@ -25,15 +26,15 @@ public class AccountController {
     }
 
     @PostMapping(path = "/{id}")
-    public ResponseEntity<Account> createAccount(@PathVariable("id") Long clientId,
-            @Valid @RequestBody AccountDto accountDto) {
-        logger.info("Creating account with data: {}", accountDto);
+    public ResponseEntity<Account> createAccount(@PathVariable("id") Long clientPrimaryKey,
+                                                 @Valid @RequestBody CreateAccount createAccount) {
+        logger.info("Creating account: {}", createAccount);
 
         try {
-            Account createdAccount = accountService.createAccount(clientId, accountDto);
+            Account createdAccount = accountService.createAccount(clientPrimaryKey, createAccount);
             return ResponseEntity.status(HttpStatus.CREATED).body(createdAccount);
-        } catch (UserNotFoundException ex) {
-            logger.error("Error creating account: {}", ex.getMessage(), ex);
+        } catch (Exception ex) {
+            logger.error("Ошибка: {}", ex.getMessage());
             return ResponseEntity.badRequest().build();
         }
     }

@@ -6,6 +6,7 @@ import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 
 public class AccountDto {
+    private Long primaryKey;
     @Enumerated(EnumType.STRING)
     private Type accountType;
     private Long balance;
@@ -13,10 +14,19 @@ public class AccountDto {
     @Enumerated(EnumType.STRING)
     private AccountStatus status;
     private Long frozenAmount;
+    private Long clientId;
 
-    public AccountDto(Long clientId, Type accountType, Long balance) {
+
+    public AccountDto(Long primaryKey,Type accountType, Long balance,
+                      Long accountId, AccountStatus status, Long
+                              frozenAmount, Long clientId) {
+        this.primaryKey = primaryKey;
         this.accountType = accountType;
         this.balance = balance;
+        this.accountId = accountId;
+        this.status = status;
+        this.frozenAmount = frozenAmount;
+        this.clientId = clientId;
     }
 
     public AccountDto(Type accountType, Long balance, Long accountId,
@@ -70,14 +80,32 @@ public class AccountDto {
         this.frozenAmount = frozenAmount;
     }
 
+    public Long getClientId() {
+        return clientId;
+    }
+
+    public void setClientId(Long clientId) {
+        this.clientId = clientId;
+    }
+
+    public Long getPrimaryKey() {
+        return primaryKey;
+    }
+
+    public void setPrimaryKey(Long primaryKey) {
+        this.primaryKey = primaryKey;
+    }
+
     @Override
     public String toString() {
         return "AccountDto{" +
-                "accountType=" + accountType +
+                "primaryKey=" + primaryKey +
+                ", accountType=" + accountType +
                 ", balance=" + balance +
                 ", accountId=" + accountId +
                 ", status=" + status +
                 ", frozenAmount=" + frozenAmount +
+                ", clientId=" + clientId +
                 '}';
     }
 }

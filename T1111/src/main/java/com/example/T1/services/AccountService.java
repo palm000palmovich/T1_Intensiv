@@ -4,9 +4,11 @@ import com.example.T1.annotations.Cached;
 import com.example.T1.annotations.LogDataSourceError;
 import com.example.T1.annotations.Metric;
 import com.example.T1.dto.AccountDto;
+import com.example.T1.dto.CreateAccount;
 import com.example.T1.exceptions.AccountNotFoundException;
 import com.example.T1.exceptions.UserNotFoundException;
 import com.example.T1.mappers.AccountMapper;
+import com.example.T1.mappers.ClientMapper;
 import com.example.T1.model.Account;
 import com.example.T1.model.Client;
 import com.example.T1.repository.AccountRepository;
@@ -17,37 +19,39 @@ import org.slf4j.LoggerFactory;
 
 @Service
 public class AccountService {
-
-    private AccountRepository accountRepository;
-
-    private AccountMapper accountMapper;
-
-    private ClientRepository clientRepository;
+    private final AccountRepository accountRepository;
+    private final AccountMapper accountMapper;
+    private final ClientRepository clientRepository;
+    private final ClientMapper clientMapper;
 
     public AccountService(AccountRepository accountRepository,
                           AccountMapper accountMapper,
-                          ClientRepository clientRepository){
+                          ClientRepository clientRepository,
+                          ClientMapper clientMapper){
         this.accountRepository = accountRepository;
         this.accountMapper = accountMapper;
         this.clientRepository = clientRepository;
+        this.clientMapper = clientMapper;
     }
 
     private final Logger logger = LoggerFactory.getLogger(AccountService.class);
 
     @LogDataSourceError
     @Metric
-    public Account createAccount(Long clientId, AccountDto accountDto) {
-        Client client = clientRepository.findById(clientId)
+    public Account createAccount(Long primaryClientId, CreateAccount createAccount) {
+        //TODO добавить проверку на jwt
+        //TODO добавить кеширование клиента
+        Client client = clientRepository.findById(primaryClientId)
                 .orElseThrow(() -> {
-                    logger.error("Client not found with ID: {}", clientId);
-                    return new UserNotFoundException(clientId);
+                    logger.error("Client not found with ID: {}", primaryClientId);
+                    return new UserNotFoundException(primaryClientId);
                 });
+        logger.info("Найденный клиент: {}", clientMapper.entityToDto(client));
 
-        Account account = accountMapper.dtoToModel(accountDto);
-        logger.info("Received: " + account.toString());
-        account.setClient(client);
+        Account accountForSaving = accountMapper.dtoToEntity(createAccount);
+        accountForSaving.setClient(client);
 
-        return accountRepository.save(account);
+        return accountRepository.save(accountForSaving);
     }
 
     @LogDataSourceError
