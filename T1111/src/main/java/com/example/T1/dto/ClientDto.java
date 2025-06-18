@@ -1,6 +1,6 @@
 package com.example.T1.dto;
 
-import com.example.T1.enums.ClientStatus;
+import org.example.enums.ClientStatus;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 

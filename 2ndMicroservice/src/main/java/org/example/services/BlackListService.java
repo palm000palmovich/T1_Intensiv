@@ -3,6 +3,7 @@ package org.example.services;
 import org.example.component.JwtUtil;
 import org.example.dto.BlackListCheck;
 import org.example.dto.BlackListCheckResponse;
+import org.example.enums.ClientStatus;
 import org.example.model.BlackList;
 import org.example.repositories.BlackListRepository;
 import org.springframework.stereotype.Service;
@@ -34,9 +35,9 @@ public class BlackListService {
         Optional<BlackList> blackList = blackListRepository.getBlackListByAllIds(blackListCheck
                 .getClientId(), blackListCheck.getAccountId());
 
-        BlackListCheckResponse blackListCheckResponse = new BlackListCheckResponse("OPEN");
+        BlackListCheckResponse blackListCheckResponse = new BlackListCheckResponse(ClientStatus.OPEN);
         if (blackList.isPresent()){
-            blackListCheckResponse.setStatus("BLOCKED");
+            blackListCheckResponse.setStatus(ClientStatus.BLOCKED);
         }
 
         return blackListCheckResponse;

@@ -5,15 +5,12 @@ import com.example.T1.enums.TransactionStatus;
 import com.example.T1.enums.Type;
 import com.example.T1.model.Account;
 import com.example.T1.model.Client;
-import com.example.T1.model.Transaction;
 import com.example.T1.repository.ClientRepository;
 import com.github.javafaker.Faker;
-import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Random;
 

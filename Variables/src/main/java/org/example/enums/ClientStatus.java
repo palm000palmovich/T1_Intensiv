@@ -1,4 +1,4 @@
-package com.example.T1.enums;
+package org.example.enums;
 
 public enum ClientStatus {
     ARRESTED, BLOCKED, OPEN
