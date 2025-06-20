@@ -51,7 +51,8 @@ public class AccountService {
         Account accountForSaving = accountMapper.dtoToEntity(createAccount);
         accountForSaving.setClient(client);
 
-        return accountRepository.save(accountForSaving);
+        Account savedAccount = accountRepository.save(accountForSaving);
+        return (savedAccount);
     }
 
     @LogDataSourceError

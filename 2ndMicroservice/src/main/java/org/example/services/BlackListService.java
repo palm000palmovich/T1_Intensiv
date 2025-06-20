@@ -11,12 +11,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Optional;
+import java.util.Random;
 
 @Service
 public class BlackListService {
     private final BlackListRepository blackListRepository;
     private final JwtUtil jwtUtil;
     private Logger logger = LoggerFactory.getLogger(BlackListService.class);
+    private static final Random random = new Random();
 
     public  BlackListService(BlackListRepository blackListRepository,
                              JwtUtil jwtUtil){
@@ -32,14 +34,36 @@ public class BlackListService {
             throw new RuntimeException("Unauthorized");
         }
 
-        Optional<BlackList> blackList = blackListRepository.getBlackListByAllIds(blackListCheck
-                .getClientId(), blackListCheck.getAccountId());
-
         BlackListCheckResponse blackListCheckResponse = new BlackListCheckResponse(ClientStatus.OPEN);
-        if (blackList.isPresent()){
+        if (randomDistributionToBlackList(blackListCheck)){
             blackListCheckResponse.setStatus(ClientStatus.BLOCKED);
         }
 
+
         return blackListCheckResponse;
     }
+
+    private boolean randomDistributionToBlackList(BlackListCheck blackListCheck){
+        int randomNum = random.nextInt(100);
+        Optional<BlackList> blackList = blackListRepository
+                .getBlackListByAllIds(blackListCheck.getClientId(), blackListCheck.getAccountId());
+
+        if (!blackList.isPresent()){
+            //Вероятоность попадания в чс - 10%
+            if (randomNum < 10){
+                BlackList newBlackList = new BlackList();
+                newBlackList.setClientId(blackListCheck.getClientId());
+                newBlackList.setAccountId(blackListCheck.getAccountId());
+
+                blackListRepository.save(newBlackList);
+                logger.info("{} был рандомно отправлен в бан.", blackList.toString());
+                return true;
+            } else{
+                return false;
+            }
+        }
+
+        return true;
+    }
+
 }

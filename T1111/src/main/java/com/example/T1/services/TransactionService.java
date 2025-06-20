@@ -19,6 +19,7 @@ import org.example.enums.ClientStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;
 
@@ -74,6 +75,7 @@ public class TransactionService {
         Client client = account.getClient();
 
         if (client.getStatus() == null){
+            logger.info("Неизвестный статус клиента. ");
             BlackListCheckResponse statusDto = service2Client
                     .checkClientStatus(client.getClientId(), account.getAccountId());
             client.setStatus(statusDto.getStatus());
@@ -83,18 +85,18 @@ public class TransactionService {
         ClientStatus currentStatus = client.getStatus();
         switch (currentStatus) {
             case OPEN -> {
-                // Проверка на превышение лимита REJECTED-транзакций
+                //Проверка частоты REJECTED-транзакций
                 LocalDateTime timeAgo = LocalDateTime.now().minusSeconds(transactionLimitTimeSeconds);
-                List<Transaction> recentRejected = transactionRepository
-                        .findByAccountAndStatusAndTimestampAfter(account, TransactionStatus.REJECTED, timeAgo);
+                List<Transaction> recentTransactions = transactionRepository.findByAccountAndStatusAndTimestampAfter(account,
+                        TransactionStatus.REJECTED, timeAgo);
 
-                if (recentRejected.size() >= transactionLimitCount) {
+                if (recentTransactions.size() > transactionLimitCount){
                     account.setStatus(AccountStatus.ARRESTED);
                     account.setFrozenAmount(account.getBalance());
                     accountRepository.save(account);
-                    logger.warn("Счет {} переведен в статус ARRESTED из-за превышения лимита REJECTED-транзакций", account.getId());
 
-                    // Проставляем текущей транзакции REJECTED
+                    logger.warn("Счет был арестован.");
+
                     Transaction rejectedTransaction = new Transaction();
                     rejectedTransaction.setValue(transactionMessage.getValue());
                     rejectedTransaction.setTimestamp(LocalDateTime.now());
@@ -103,12 +105,14 @@ public class TransactionService {
                     rejectedTransaction.setAccount(account);
                     account.addTransaction(rejectedTransaction);
                     accountRepository.save(account);
+                    logger.warn("Транзакции присвоен статус REJECTED.");
 
                     return;
                 }
 
                 sendAcceptEvent(account, transactionMessage);
             }
+
             case BLOCKED -> handleBlockedClient(account, transactionMessage);
             default -> throw new IllegalStateException("Неизвестный статус клиента: " + currentStatus);
         }
