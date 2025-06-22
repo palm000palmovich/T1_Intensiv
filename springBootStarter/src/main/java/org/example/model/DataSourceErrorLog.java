@@ -1,20 +1,19 @@
-package com.example.T1.model;
+package org.example.model;
 
 import jakarta.persistence.*;
 
 @Entity
-@Table(name = "dataSourceErrorLog")
+@Table(name = "data_source_error_log")
 public class DataSourceErrorLog {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "stackTrace")
-    private String stackTrace;
     @Column(name = "message")
     private String message;
-    @Column(name = "methodSignature")
+    @Column(name = "method_signature")
     private String methodSignature;
+    @Column(name = "stack_trace")
+    private String stackTrace;
 
     public Long getId() {
         return id;

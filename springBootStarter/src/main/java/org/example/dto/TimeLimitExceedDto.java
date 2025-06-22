@@ -1,4 +1,4 @@
-package com.example.T1.dto;
+package org.example.dto;
 
 public class TimeLimitExceedDto {
     private String methodSignature;

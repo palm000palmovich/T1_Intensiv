@@ -1,31 +1,33 @@
-package com.example.T1.aspects;
+package org.example.aspects;
 
-import com.example.T1.dto.DataErrorDto;
-import com.example.T1.services.DataSourseErrorLogService;
+import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
-import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.stereotype.Component;
+import org.example.dto.DataErrorDto;
+import org.example.model.DataSourceErrorLog;
+import org.example.repository.DataSourceErrorLogRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
 @Aspect
 @Component
 public class DataSourceErrorLoggingAspect {
-    private final DataSourseErrorLogService dataSourseErrorLogService;
+    private final DataSourceErrorLogRepository dataSourceErrorLogRepository;
     private KafkaTemplate<String, DataErrorDto> kafkaTemplate;
     private Logger logger = LoggerFactory.getLogger(DataSourceErrorLoggingAspect.class);
 
-    public DataSourceErrorLoggingAspect(DataSourseErrorLogService dataSourseErrorLogService,
+    public DataSourceErrorLoggingAspect(DataSourceErrorLogRepository dataSourceErrorLogRepository,
                                         KafkaTemplate<String, DataErrorDto> kafkaTemplate){
-        this.dataSourseErrorLogService = dataSourseErrorLogService;
+        this.dataSourceErrorLogRepository = dataSourceErrorLogRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Around("@annotation(com.example.T1.annotations.LogDataSourceError)")
+    @Around("@annotation(org.example.annotations.LogDataSourceError)")
     public Object logDataSourceError(ProceedingJoinPoint joinPoint) throws Throwable{
         try{
             return joinPoint.proceed();
@@ -42,11 +44,25 @@ public class DataSourceErrorLoggingAspect {
                 logger.info("{} успешно обработан и отправлен в топик t1_demo_metrics.", error.toString());
             } catch(Exception exep){
                 logger.error("Ошибка отправки сообщения в топик: {}", exep.getMessage());
-                dataSourseErrorLogService.saveErrorToBd(ex,
+                saveErrorToBd(ex,
                         joinPoint.getSignature().toShortString());
             }
             logger.info("Аспект отработал.");
             throw ex;
+        }
+    }
+
+    private void saveErrorToBd(Exception ex, String methodSignature){
+        DataSourceErrorLog errorLog = new DataSourceErrorLog();
+        errorLog.setStackTrace(ExceptionUtils.getStackTrace(ex));
+        errorLog.setMessage(ex.getMessage());
+        errorLog.setMethodSignature(methodSignature);
+
+        try{
+            logger.info("Ошибка {} была сохранена в бд ",
+                    dataSourceErrorLogRepository.save(errorLog));
+        } catch(Exception e){
+            logger.error("Ошибка в сохранении ошибки метода {} ", methodSignature);
         }
     }
 

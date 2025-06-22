@@ -1,8 +1,5 @@
 package com.example.T1.configuration;
 
-import com.example.T1.dto.DataErrorDto;
-import com.example.T1.dto.TimeLimitExceedDto;
-
 import com.example.T1.dto.TransactionMessage;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -118,34 +115,4 @@ public class KafkaConfig {
         return factory;
     }
 
-
-    //Producer для сообщений об Error
-    @Bean
-    public KafkaTemplate<String, DataErrorDto> errorDtoKafkaTemplate() {
-        return new KafkaTemplate<>(errorDtoProducerFactory());
-    }
-
-    @Bean
-    public ProducerFactory<String, DataErrorDto> errorDtoProducerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(configProps);
-    }
-
-    //Producer для сообщений о медленных методах
-    @Bean
-    public KafkaTemplate<String, TimeLimitExceedDto> timeLimitExceedDtoKafkaTemplate() {
-        return new KafkaTemplate<>(methodMetricProducerFactory());
-    }
-
-    @Bean
-    public ProducerFactory<String, TimeLimitExceedDto> methodMetricProducerFactory() {
-        Map<String, Object> configProps = new HashMap<>();
-        configProps.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, bootstrapServers);
-        configProps.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class);
-        configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, JsonSerializer.class);
-        return new DefaultKafkaProducerFactory<>(configProps);
-    }
 }

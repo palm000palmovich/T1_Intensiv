@@ -1,4 +1,4 @@
-package com.example.T1.model;
+package org.example.model;
 
 import jakarta.persistence.*;
 
@@ -12,7 +12,7 @@ public class TimeLimitExceedLog {
     private String methodSignature;
     @Column(name = "difference")
     private Long difference;
-    @Column(name = "units_of_measurement")
+    @Column(name = "units_of_measurements")
     private String unitsOfMeasurement;
 
     public TimeLimitExceedLog(Long id, String methodSignature, Long difference, String unitsOfMeasurement) {

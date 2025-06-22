@@ -1,6 +1,6 @@
-package com.example.T1.repository;
+package org.example.repository;
 
-import com.example.T1.model.DataSourceErrorLog;
+import org.example.model.DataSourceErrorLog;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 

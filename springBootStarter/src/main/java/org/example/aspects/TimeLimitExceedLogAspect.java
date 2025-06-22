@@ -1,34 +1,34 @@
-package com.example.T1.aspects;
+package org.example.aspects;
 
-
-import com.example.T1.dto.TimeLimitExceedDto;
-import com.example.T1.services.TimeLimitExceedLogService;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
+import org.example.dto.TimeLimitExceedDto;
+import org.example.model.TimeLimitExceedLog;
+import org.example.repository.TimeLimitExceedLogRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 @Aspect
 @Component
 public class TimeLimitExceedLogAspect {
-    private final TimeLimitExceedLogService timeLimitExceedLogService;
+    private final TimeLimitExceedLogRepository timeLimitExceedLogRepository;
     private final KafkaTemplate<String, TimeLimitExceedDto> kafkaTemplate;
     private Logger logger = LoggerFactory.getLogger(TimeLimitExceedLogAspect.class);
 
     @Value("${limit.method.time}")
     private Long limitTime;
 
-    public TimeLimitExceedLogAspect(TimeLimitExceedLogService timeLimitExceedLogService,
+    public TimeLimitExceedLogAspect(TimeLimitExceedLogRepository timeLimitExceedLogRepository,
                                     KafkaTemplate<String, TimeLimitExceedDto> kafkaTemplate){
-        this.timeLimitExceedLogService = timeLimitExceedLogService;
+        this.timeLimitExceedLogRepository = timeLimitExceedLogRepository;
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    @Around("@annotation(com.example.T1.annotations.Metric)")
+    @Around("@annotation(org.example.annotations.Metric)")
     public Object checkMethodRunningTime(ProceedingJoinPoint joinPoint) throws Throwable{
         logger.info("Аспект сканирует метод {}", joinPoint.getSignature().toShortString());
         Long startTime = System.currentTimeMillis();
@@ -53,12 +53,34 @@ public class TimeLimitExceedLogAspect {
                     logger.info("Сообщение успешно отправлено из аспекта.");
                 } catch(RuntimeException ex){
                     logger.error("Kafka не смогла отправить сообщение");
-                    timeLimitExceedLogService.checkSlowMethod(joinPoint.getSignature().toShortString(),
+                    checkSlowMethod(joinPoint.getSignature().toShortString(),
                             duration);
                 }
             }
 
             logger.info("Аспект отработал.");
+        }
+    }
+
+    private void checkSlowMethod(String methodSignature, Long methodTime){
+        Long difference = methodTime - limitTime;
+
+        if (difference > 0){
+            logger.info("Метод {} медленнeе установленного лимита в {} мс. на {} мс.",
+                    methodSignature, limitTime, difference);
+
+            try{
+                TimeLimitExceedLog timeLimitExceedLog = new TimeLimitExceedLog();
+
+                timeLimitExceedLog.setMethodSignature(methodSignature);
+                timeLimitExceedLog.setDifference(difference);
+
+
+                logger.info("Медленный метод был сохранен в бд: {}",
+                        timeLimitExceedLogRepository.save(timeLimitExceedLog));
+            } catch (Exception e){
+                logger.error("Проблемы с сохранением медленного метода.");
+            }
         }
     }
 
