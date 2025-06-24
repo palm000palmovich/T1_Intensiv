@@ -1,7 +1,6 @@
 package com.example.T1.dto;
 
 import com.example.T1.enums.TransactionStatus;
-import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 

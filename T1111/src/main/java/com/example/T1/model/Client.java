@@ -1,6 +1,6 @@
 package com.example.T1.model;
 
-import com.example.T1.enums.ClientStatus;
+import org.example.enums.ClientStatus;
 import com.fasterxml.jackson.annotation.JsonManagedReference;
 import jakarta.persistence.*;
 

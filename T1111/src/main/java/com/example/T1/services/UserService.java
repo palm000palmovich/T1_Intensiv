@@ -3,7 +3,6 @@ package com.example.T1.services;
 import com.example.T1.component.RedisCacheUtils;
 import com.example.T1.dto.RegisterDto;
 import com.example.T1.dto.UserFullInfo;
-import com.example.T1.enums.ClientStatus;
 import com.example.T1.enums.Type;
 import com.example.T1.enums.UserRoles;
 import com.example.T1.exceptions.UserAlreadyRegisteredException;

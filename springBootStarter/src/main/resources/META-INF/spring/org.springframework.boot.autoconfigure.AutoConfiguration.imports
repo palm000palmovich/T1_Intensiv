@@ -1,0 +1,2 @@
+org.example.configuration.StarterAutoConfiguration
+org.example.configuration.StarterLiquibaseConfig

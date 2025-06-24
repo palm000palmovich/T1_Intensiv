@@ -1,26 +1,28 @@
 package org.example.dto;
 
-public class BlackListCheckResponse {
-    private String status;
+import org.example.enums.ClientStatus;
 
-    public BlackListCheckResponse(String status) {
+public class BlackListCheckResponse {
+    private ClientStatus status;
+
+    public BlackListCheckResponse(ClientStatus status) {
         this.status = status;
     }
 
     public BlackListCheckResponse(){}
 
-    public String getStatus() {
+    public ClientStatus getStatus() {
         return status;
     }
 
-    public void setStatus(String status) {
+    public void setStatus(ClientStatus status) {
         this.status = status;
     }
 
     @Override
     public String toString() {
         return "BlackListCheckResponse{" +
-                "status='" + status + '\'' +
+                "status=" + status +
                 '}';
     }
 }
